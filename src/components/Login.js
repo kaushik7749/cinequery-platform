@@ -1,10 +1,21 @@
 import React, { useRef, useState } from "react";
 import Header from "./Header";
 import { checkValidData } from "../utils/validate";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import { auth } from "../utils/firebase";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addUser } from "../utils/userSlice";
 
 const Login = () => {
   const [isSignInForm, setIsSignInForm] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const toggleSignInForm = () => {
     setIsSignInForm(!isSignInForm);
@@ -18,8 +29,62 @@ const Login = () => {
     //validate the form data
     const message = checkValidData(email.current.value, password.current.value);
     setErrorMessage(message);
+    if (message) return;
 
-    //sign in/sign up
+    //Sign In Sign Up logic
+    if (!isSignInForm) {
+      //Sign up logic which we took from firebase authentication doc
+      createUserWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then((userCredential) => {
+          const user = userCredential.user;
+          updateProfile(user, {
+            displayName: name.current.value,
+            photoURL: "https://avatars.githubusercontent.com/u/73753045?v=4",
+          })
+            .then(() => {
+              //we will dispatch here which will update the displayName and photoURL with current value
+              const { uid, email, displayName, photoURL } = auth.currentUser;
+              dispatch(
+                addUser({
+                  uid: uid,
+                  email: email,
+                  displayName: displayName,
+                  photoURL: photoURL,
+                })
+              );
+              navigate("/browse");
+            })
+            .catch((error) => {
+              setErrorMessage(error.message);
+            });
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorCode + "-" + errorMessage);
+        });
+    } else {
+      //Sign in logic which we took from firebase authentication doc
+      signInWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then((userCredential) => {
+          const user = userCredential.user;
+          console.log(user);
+          navigate("/browse");
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorCode + "-" + errorMessage);
+        });
+    }
   };
 
   return (
@@ -27,7 +92,7 @@ const Login = () => {
       <Header />
       <div className="absolute">
         <img
-          src="https://assets.nflxext.com/ffe/siteui/vlv3/00103100-5b45-4d4f-af32-342649f1bda5/64774cd8-5c3a-4823-a0bb-1610d6971bd4/IN-en-20230821-popsignuptwoweeks-perspective_alpha_website_small.jpg"
+          src="https://assets.nflxext.com/ffe/siteui/vlv3/855ed6e2-d9f1-4afd-90da-96023ec747c3/85eb5b91-25ed-4965-ace9-ba8e4a0ead8d/IN-en-20230828-popsignuptwoweeks-perspective_alpha_website_large.jpg"
           alt="logo"
         />
       </div>
