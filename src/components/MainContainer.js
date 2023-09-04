@@ -9,7 +9,7 @@ const MainContainer = () => {
 
   //Basically there are 20 movies in our list we want only the first movie title and background to display
   //I will use movies[1] bcoz it's trailer is good or else you keep movies[0]
-  const mainMovie = movies[1];
+  const mainMovie = movies[9];
   console.log(mainMovie);
 
   const { original_title, overview, id } = mainMovie;
